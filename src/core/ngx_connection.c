@@ -401,9 +401,8 @@ ngx_int_t ngx_set_inherited_sockets(ngx_cycle_t *cycle)
     return NGX_OK;
 }
 
-
-ngx_int_t
-ngx_open_listening_sockets(ngx_cycle_t *cycle)
+/*初始化套接字*/
+ngx_int_t ngx_open_listening_sockets(ngx_cycle_t *cycle)
 {
     int               reuseaddr;
     ngx_uint_t        i, tries, failed;
@@ -420,12 +419,12 @@ ngx_open_listening_sockets(ngx_cycle_t *cycle)
     log = cycle->log;
 
     /* TODO: configurable try number */
-
+    /*尝试5次初始化套接字*/
     for (tries = 5; tries; tries--) {
         failed = 0;
 
         /* for each listening socket */
-
+        /*遍历所有需要监听项*/
         ls = cycle->listening.elts;
         for (i = 0; i < cycle->listening.nelts; i++) {
 
@@ -434,7 +433,7 @@ ngx_open_listening_sockets(ngx_cycle_t *cycle)
             }
 
 #if (NGX_HAVE_REUSEPORT)
-
+            /*设置端口复用*/
             if (ls[i].add_reuseport) {
 
                 /*
@@ -446,7 +445,7 @@ ngx_open_listening_sockets(ngx_cycle_t *cycle)
                 int  reuseport = 1;
 
 #ifdef SO_REUSEPORT_LB
-
+                /*基于源IP/端口哈希做负载均衡*/
                 if (setsockopt(ls[i].fd, SOL_SOCKET, SO_REUSEPORT_LB,
                                (const void *) &reuseport, sizeof(int))
                     == -1)
@@ -458,7 +457,7 @@ ngx_open_listening_sockets(ngx_cycle_t *cycle)
                 }
 
 #else
-
+                /*基于套接字负载状态做负载均衡*/
                 if (setsockopt(ls[i].fd, SOL_SOCKET, SO_REUSEPORT,
                                (const void *) &reuseport, sizeof(int))
                     == -1)
@@ -472,11 +471,11 @@ ngx_open_listening_sockets(ngx_cycle_t *cycle)
                 ls[i].add_reuseport = 0;
             }
 #endif
-
+            /*已经初始化，跳过*/
             if (ls[i].fd != (ngx_socket_t) -1) {
                 continue;
             }
-
+            /*继承而来的选项，直接跳过*/
             if (ls[i].inherited) {
 
                 /* TODO: close on exit */
@@ -485,7 +484,7 @@ ngx_open_listening_sockets(ngx_cycle_t *cycle)
 
                 continue;
             }
-
+            /*初始化套接字*/
             s = ngx_socket(ls[i].sockaddr->sa_family, ls[i].type, 0);
 
             if (s == (ngx_socket_t) -1) {
@@ -493,7 +492,7 @@ ngx_open_listening_sockets(ngx_cycle_t *cycle)
                               ngx_socket_n " %V failed", &ls[i].addr_text);
                 return NGX_ERROR;
             }
-
+            /*设置地址复用*/
             if (ls[i].type != SOCK_DGRAM || !ngx_test_config) {
 
                 if (setsockopt(s, SOL_SOCKET, SO_REUSEADDR,
@@ -513,7 +512,7 @@ ngx_open_listening_sockets(ngx_cycle_t *cycle)
                     return NGX_ERROR;
                 }
             }
-
+            /*设置端口复用*/
 #if (NGX_HAVE_REUSEPORT)
 
             if (ls[i].reuseport && !ngx_test_config) {
@@ -561,7 +560,7 @@ ngx_open_listening_sockets(ngx_cycle_t *cycle)
 #endif
             }
 #endif
-
+            /*设置了ipv6地址*/
 #if (NGX_HAVE_INET6 && defined IPV6_V6ONLY)
 
             if (ls[i].sockaddr->sa_family == AF_INET6) {
@@ -599,7 +598,7 @@ ngx_open_listening_sockets(ngx_cycle_t *cycle)
 
             ngx_log_debug2(NGX_LOG_DEBUG_CORE, log, 0,
                            "bind() %V #%d ", &ls[i].addr_text, s);
-
+            /*使用Bind绑定端口和地址*/
             if (bind(s, ls[i].sockaddr, ls[i].socklen) == -1) {
                 err = ngx_socket_errno;
 
@@ -652,7 +651,7 @@ ngx_open_listening_sockets(ngx_cycle_t *cycle)
                 ls[i].fd = s;
                 continue;
             }
-
+            /*监听*/
             if (listen(s, ls[i].backlog) == -1) {
                 err = ngx_socket_errno;
 
@@ -685,12 +684,12 @@ ngx_open_listening_sockets(ngx_cycle_t *cycle)
                 continue;
             }
 
-            ls[i].listen = 1;
+            ls[i].listen = 1;/*监听标志位*/
 
             ls[i].fd = s;
         }
 
-        if (!failed) {
+        if (!failed) {/*没有失败的，不需要重试，直接退出循环*/
             break;
         }
 
