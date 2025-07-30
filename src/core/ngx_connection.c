@@ -709,9 +709,8 @@ ngx_int_t ngx_open_listening_sockets(ngx_cycle_t *cycle)
     return NGX_OK;
 }
 
-
-void
-ngx_configure_listening_sockets(ngx_cycle_t *cycle)
+/*配置监听套接字*/
+void ngx_configure_listening_sockets(ngx_cycle_t *cycle)
 {
     int                        value;
     ngx_uint_t                 i;
