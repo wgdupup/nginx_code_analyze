@@ -178,9 +178,8 @@ ngx_inet6_addr(u_char *p, size_t len, u_char *addr)
 
 #endif
 
-
-size_t
-ngx_sock_ntop(struct sockaddr *sa, socklen_t socklen, u_char *text, size_t len,
+/*将地址转换为点分十进制*/
+size_t ngx_sock_ntop(struct sockaddr *sa, socklen_t socklen, u_char *text, size_t len,
     ngx_uint_t port)
 {
     u_char               *p;

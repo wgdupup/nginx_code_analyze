@@ -159,18 +159,19 @@ ngx_int_t ngx_set_inherited_sockets(ngx_cycle_t *cycle)
         }
 
         ls[i].socklen = sizeof(ngx_sockaddr_t);
+        /*套接字有效性校验*/
         if (getsockname(ls[i].fd, ls[i].sockaddr, &ls[i].socklen) == -1) {
             ngx_log_error(NGX_LOG_CRIT, cycle->log, ngx_socket_errno,
                           "getsockname() of the inherited "
                           "socket #%d failed", ls[i].fd);
-            ls[i].ignore = 1;
+            ls[i].ignore = 1;/*将该套接字标记为无效，后续无须处理*/
             continue;
         }
 
         if (ls[i].socklen > (socklen_t) sizeof(ngx_sockaddr_t)) {
             ls[i].socklen = sizeof(ngx_sockaddr_t);
         }
-
+        /*判断协议族*/
         switch (ls[i].sockaddr->sa_family) {
 
 #if (NGX_HAVE_INET6)
@@ -199,12 +200,12 @@ ngx_int_t ngx_set_inherited_sockets(ngx_cycle_t *cycle)
             ls[i].ignore = 1;
             continue;
         }
-
+        
         ls[i].addr_text.data = ngx_pnalloc(cycle->pool, len);
         if (ls[i].addr_text.data == NULL) {
             return NGX_ERROR;
         }
-
+        /*将地址转换为点分十进制*/
         len = ngx_sock_ntop(ls[i].sockaddr, ls[i].socklen,
                             ls[i].addr_text.data, len, 1);
         if (len == 0) {
@@ -216,7 +217,7 @@ ngx_int_t ngx_set_inherited_sockets(ngx_cycle_t *cycle)
         ls[i].backlog = NGX_LISTEN_BACKLOG;
 
         olen = sizeof(int);
-
+        /*获取套接字类型*/
         if (getsockopt(ls[i].fd, SOL_SOCKET, SO_TYPE, (void *) &ls[i].type,
                        &olen)
             == -1)
@@ -228,7 +229,7 @@ ngx_int_t ngx_set_inherited_sockets(ngx_cycle_t *cycle)
         }
 
         olen = sizeof(int);
-
+        /*获取旧进程中套接字的接收缓冲区大小*/
         if (getsockopt(ls[i].fd, SOL_SOCKET, SO_RCVBUF, (void *) &ls[i].rcvbuf,
                        &olen)
             == -1)
@@ -241,7 +242,7 @@ ngx_int_t ngx_set_inherited_sockets(ngx_cycle_t *cycle)
         }
 
         olen = sizeof(int);
-
+        /*获取旧进程中套接字的发送缓冲区大小*/
         if (getsockopt(ls[i].fd, SOL_SOCKET, SO_SNDBUF, (void *) &ls[i].sndbuf,
                        &olen)
             == -1)
@@ -280,7 +281,7 @@ ngx_int_t ngx_set_inherited_sockets(ngx_cycle_t *cycle)
         olen = sizeof(int);
 
 #ifdef SO_REUSEPORT_LB
-
+        /*获取旧进程中套接字的是否复用端口*/
         if (getsockopt(ls[i].fd, SOL_SOCKET, SO_REUSEPORT_LB,
                        (void *) &reuseport, &olen)
             == -1)
@@ -294,7 +295,7 @@ ngx_int_t ngx_set_inherited_sockets(ngx_cycle_t *cycle)
         }
 
 #else
-
+        /*获取旧进程中套接字的是否复用端口，不同的负载均衡方式*/
         if (getsockopt(ls[i].fd, SOL_SOCKET, SO_REUSEPORT,
                        (void *) &reuseport, &olen)
             == -1)
@@ -309,11 +310,11 @@ ngx_int_t ngx_set_inherited_sockets(ngx_cycle_t *cycle)
 #endif
 
 #endif
-
+        /*如果不是流式套接字，那么直接跳过*/
         if (ls[i].type != SOCK_STREAM) {
             continue;
         }
-
+        /*获取旧进程快速打开策略*/
 #if (NGX_HAVE_TCP_FASTOPEN)
 
         olen = sizeof(int);
@@ -336,7 +337,7 @@ ngx_int_t ngx_set_inherited_sockets(ngx_cycle_t *cycle)
         }
 
 #endif
-
+        /*获取旧进程套接字延迟接受策略*/
 #if (NGX_HAVE_DEFERRED_ACCEPT && defined SO_ACCEPTFILTER)
 
         ngx_memzero(&af, sizeof(struct accept_filter_arg));
@@ -369,7 +370,7 @@ ngx_int_t ngx_set_inherited_sockets(ngx_cycle_t *cycle)
         (void) ngx_cpystrn((u_char *) ls[i].accept_filter,
                            (u_char *) af.af_name, 16);
 #endif
-
+        /*获取旧进程套接字延迟接受策略*/
 #if (NGX_HAVE_DEFERRED_ACCEPT && defined TCP_DEFER_ACCEPT)
 
         timeout = 0;
@@ -428,7 +429,7 @@ ngx_int_t ngx_open_listening_sockets(ngx_cycle_t *cycle)
         ls = cycle->listening.elts;
         for (i = 0; i < cycle->listening.nelts; i++) {
 
-            if (ls[i].ignore) {
+            if (ls[i].ignore) {/*忽略则跳过*/
                 continue;
             }
 
@@ -475,7 +476,7 @@ ngx_int_t ngx_open_listening_sockets(ngx_cycle_t *cycle)
             if (ls[i].fd != (ngx_socket_t) -1) {
                 continue;
             }
-            /*继承而来的选项，直接跳过*/
+            /*继承而来的选项，直接跳过，因为已经打开了*/
             if (ls[i].inherited) {
 
                 /* TODO: close on exit */

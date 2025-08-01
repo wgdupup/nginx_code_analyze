@@ -115,7 +115,7 @@ ngx_cycle_t * ngx_init_cycle(ngx_cycle_t *old_cycle)/*cycle初始化*/
         ngx_destroy_pool(pool);
         return NULL;
     }
-    //设置安装前缀
+    //设置前缀
     cycle->prefix.len = old_cycle->prefix.len;
     cycle->prefix.data = ngx_pstrdup(pool, &old_cycle->prefix);
     if (cycle->prefix.data == NULL) {
@@ -648,12 +648,13 @@ ngx_cycle_t * ngx_init_cycle(ngx_cycle_t *old_cycle)/*cycle初始化*/
 #endif
         }
     }
-
+    /*打开需要监听的套接字*/
     if (ngx_open_listening_sockets(cycle) != NGX_OK) {
         goto failed;
     }
 
     if (!ngx_test_config) {
+        /*配置监听套接字*/
         ngx_configure_listening_sockets(cycle);
     }
 
@@ -1110,7 +1111,7 @@ void ngx_delete_pidfile(ngx_cycle_t *cycle)
     }
 }
 
-
+/*向运行中的nginx服务发送信号*/
 ngx_int_t ngx_signal_process(ngx_cycle_t *cycle, char *sig)
 {
     ssize_t           n;

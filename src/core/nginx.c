@@ -328,6 +328,7 @@ main(int argc, char *const *argv)/*程序入口*/
     }
 
     if (ngx_signal) {
+        /*向运行中的nginx进程发送信号，然后直接返回*/
         return ngx_signal_process(cycle, ngx_signal);
     }
 
@@ -342,7 +343,7 @@ main(int argc, char *const *argv)/*程序入口*/
     }
 
 #if !(NGX_WIN32)
-
+    /*注册信号及其回调函数*/
     if (ngx_init_signals(cycle->log) != NGX_OK) {
         return 1;
     }
@@ -360,7 +361,7 @@ main(int argc, char *const *argv)/*程序入口*/
     }
 
 #endif
-
+    /*创建主进程pid文件*/
     if (ngx_create_pidfile(&ccf->pid, cycle->log) != NGX_OK) {
         return 1;
     }
@@ -388,9 +389,8 @@ main(int argc, char *const *argv)/*程序入口*/
     return 0;
 }
 
-
-static void
-ngx_show_version_info(void)
+/*显示nginx信息*/
+static void ngx_show_version_info(void)
 {
     ngx_write_stderr("nginx version: " NGINX_VER_BUILD NGX_LINEFEED);
 
