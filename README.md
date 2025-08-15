@@ -1,1 +1,2 @@
 # nginx_code_analyze
+主要记录了阅读源码时添加的注释
