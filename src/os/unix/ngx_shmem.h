@@ -12,7 +12,7 @@
 #include <ngx_config.h>
 #include <ngx_core.h>
 
-
+/*共享内存配置*/
 typedef struct {
     u_char      *addr;//共享内存起始地址
     size_t       size;//共享内存大小

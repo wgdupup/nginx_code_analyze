@@ -23,7 +23,7 @@ typedef struct {
 /*互斥锁的控制结构*/
 typedef struct {
 #if (NGX_HAVE_ATOMIC_OPS)
-    ngx_atomic_t  *lock;/*指向共享内存中ngx_shmtx_sh_t结构的lock成员的指针*/
+    ngx_atomic_t  *lock;/*指向ngx_shmtx_sh_t结构lock成员的指针*/
 #if (NGX_HAVE_POSIX_SEM)
     ngx_atomic_t  *wait;/*指向共享内存中ngx_shmtx_sh_t结构的wait成员的指针*/
     ngx_uint_t     semaphore;/*标记是否使用信号量*/

@@ -13,6 +13,13 @@
 /*匿名共享内存*/
 ngx_int_t ngx_shm_alloc(ngx_shm_t *shm)
 {
+    /*
+        NULL：让系统自动选择映射的内存地址
+        shm->size：要分配的共享内存大小
+        PROT_READ|PROT_WRITE：内存保护标志，允许读写操作
+        MAP_ANON|MAP_SHARED：MAP_ANON：创建匿名映射，不关联任何文件，MAP_SHARED：共享映射，对内存的修改会被其他进程看到
+        -1, 0：匿名映射时文件描述符设为-1，偏移量设为0
+    */
     shm->addr = (u_char *) mmap(NULL, shm->size,
                                 PROT_READ|PROT_WRITE,
                                 MAP_ANON|MAP_SHARED, -1, 0);
@@ -83,7 +90,7 @@ void ngx_shm_free(ngx_shm_t *shm)
 ngx_int_t ngx_shm_alloc(ngx_shm_t *shm)
 {
     int  id;
-
+    /*创建或获取共享内存段*/
     id = shmget(IPC_PRIVATE, shm->size, (SHM_R|SHM_W|IPC_CREAT));
 
     if (id == -1) {
@@ -94,13 +101,13 @@ ngx_int_t ngx_shm_alloc(ngx_shm_t *shm)
 
     ngx_log_debug1(NGX_LOG_DEBUG_CORE, shm->log, 0, "shmget id: %d", id);
 
-    shm->addr = shmat(id, NULL, 0);
+    shm->addr = shmat(id, NULL, 0);/*将共享内存段映射到当前进程的地址空间*/
 
     if (shm->addr == (void *) -1) {
         ngx_log_error(NGX_LOG_ALERT, shm->log, ngx_errno, "shmat() failed");
     }
 
-    if (shmctl(id, IPC_RMID, NULL) == -1) {
+    if (shmctl(id, IPC_RMID, NULL) == -1) {/*当进程退出时共享内存自动删除*/
         ngx_log_error(NGX_LOG_ALERT, shm->log, ngx_errno,
                       "shmctl(IPC_RMID) failed");
     }
