@@ -37,7 +37,7 @@ char           **ngx_argv;
 char           **ngx_os_argv;
 
 ngx_int_t        ngx_process_slot;
-ngx_socket_t     ngx_channel;
+ngx_socket_t     ngx_channel;/*socketpair的另外一端[1]*/
 ngx_int_t        ngx_last_process;
 ngx_process_t    ngx_processes[NGX_MAX_PROCESSES];
 
@@ -168,7 +168,7 @@ ngx_pid_t ngx_spawn_process(ngx_cycle_t *cycle, ngx_spawn_proc_pt proc, void *da
             ngx_close_channel(ngx_processes[s].channel, cycle->log);
             return NGX_INVALID_PID;
         }
-        /*不可被子进程继承，会被关闭*/
+        /*在执行exec系列函数时自动关闭该文件描述符*/
         if (fcntl(ngx_processes[s].channel[0], F_SETFD, FD_CLOEXEC) == -1) {
             ngx_log_error(NGX_LOG_ALERT, cycle->log, ngx_errno,
                           "fcntl(FD_CLOEXEC) failed while spawning \"%s\"",
@@ -176,7 +176,7 @@ ngx_pid_t ngx_spawn_process(ngx_cycle_t *cycle, ngx_spawn_proc_pt proc, void *da
             ngx_close_channel(ngx_processes[s].channel, cycle->log);
             return NGX_INVALID_PID;
         }
-        /*不可被子进程继承，会被关闭*/
+        /*在执行exec系列函数时自动关闭该文件描述符*/
         if (fcntl(ngx_processes[s].channel[1], F_SETFD, FD_CLOEXEC) == -1) {
             ngx_log_error(NGX_LOG_ALERT, cycle->log, ngx_errno,
                           "fcntl(FD_CLOEXEC) failed while spawning \"%s\"",
