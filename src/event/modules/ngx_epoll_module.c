@@ -389,8 +389,8 @@ static ngx_int_t ngx_epoll_init(ngx_cycle_t *cycle, ngx_msec_t timer)
 
 #if (NGX_HAVE_EVENTFD)
 
-static ngx_int_t
-ngx_epoll_notify_init(ngx_log_t *log)
+/*初始化一个基于eventfd的通知机制*/
+static ngx_int_t ngx_epoll_notify_init(ngx_log_t *log)
 {
     struct epoll_event  ee;
 
@@ -407,16 +407,16 @@ ngx_epoll_notify_init(ngx_log_t *log)
 
     ngx_log_debug1(NGX_LOG_DEBUG_EVENT, log, 0,
                    "notify eventfd: %d", notify_fd);
-
+    /*初始化通知事件结构体*/
     notify_event.handler = ngx_epoll_notify_handler;
     notify_event.log = log;
     notify_event.active = 1;
-
+    /*初始化连接结构体*/
     notify_conn.fd = notify_fd;
     notify_conn.read = &notify_event;
     notify_conn.log = log;
 
-    ee.events = EPOLLIN|EPOLLET;
+    ee.events = EPOLLIN|EPOLLET;/*边缘触发*/
     ee.data.ptr = &notify_conn;
 
     if (epoll_ctl(ep, EPOLL_CTL_ADD, notify_fd, &ee) == -1) {
@@ -434,18 +434,17 @@ ngx_epoll_notify_init(ngx_log_t *log)
     return NGX_OK;
 }
 
-
-static void
-ngx_epoll_notify_handler(ngx_event_t *ev)
+/*事件触发处理函数*/
+static void ngx_epoll_notify_handler(ngx_event_t *ev)
 {
     ssize_t               n;
     uint64_t              count;
     ngx_err_t             err;
     ngx_event_handler_pt  handler;
-
+    /*递增计数器，每次触发事件时加1*/
     if (++ev->index == NGX_MAX_UINT32_VALUE) {
         ev->index = 0;
-
+        /*index达到最大值时，采调用read，减少read系统调用的频率*/
         n = read(notify_fd, &count, sizeof(uint64_t));
 
         err = ngx_errno;
@@ -468,8 +467,7 @@ ngx_epoll_notify_handler(ngx_event_t *ev)
 
 #if (NGX_HAVE_EPOLLRDHUP)
 
-static void
-ngx_epoll_test_rdhup(ngx_cycle_t *cycle)
+static void ngx_epoll_test_rdhup(ngx_cycle_t *cycle)
 {
     int                 s[2], events;
     struct epoll_event  ee;
@@ -761,9 +759,8 @@ static ngx_int_t ngx_epoll_del_connection(ngx_connection_t *c, ngx_uint_t flags)
 
 
 #if (NGX_HAVE_EVENTFD)
-
-static ngx_int_t
-ngx_epoll_notify(ngx_event_handler_pt handler)
+/*通过向notify_fd中写数据，唤醒主线程，让其调用handler函数*/
+static ngx_int_t ngx_epoll_notify(ngx_event_handler_pt handler)
 {
     static uint64_t inc = 1;
 

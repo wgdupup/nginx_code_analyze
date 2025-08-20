@@ -532,7 +532,7 @@ static ngx_int_t ngx_event_module_init(ngx_cycle_t *cycle)
     {
     ngx_int_t      limit;
     struct rlimit  rlmt;
-    
+    /*打开文件描述符的数量限制*/
     if (getrlimit(RLIMIT_NOFILE, &rlmt) == -1) {
         ngx_log_error(NGX_LOG_ALERT, cycle->log, ngx_errno,
                       "getrlimit(RLIMIT_NOFILE) failed, ignored");
@@ -597,7 +597,7 @@ static ngx_int_t ngx_event_module_init(ngx_cycle_t *cycle)
     /*初始化accept锁*/
     ngx_accept_mutex_ptr = (ngx_atomic_t *) shared;
     ngx_accept_mutex.spin = (ngx_uint_t) -1;
-
+    /*初始化互斥锁结构*/
     if (ngx_shmtx_create(&ngx_accept_mutex, (ngx_shmtx_sh_t *) shared,
                          cycle->lock_file.data)
         != NGX_OK)
