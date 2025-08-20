@@ -758,17 +758,16 @@ ngx_close_glob(ngx_glob_t *gl)
     globfree(&gl->pglob);
 }
 
-
-ngx_err_t
-ngx_trylock_fd(ngx_fd_t fd)
+/*非阻塞获取文件锁*/
+ngx_err_t ngx_trylock_fd(ngx_fd_t fd)
 {
     struct flock  fl;
 
     ngx_memzero(&fl, sizeof(struct flock));
-    fl.l_type = F_WRLCK;
+    fl.l_type = F_WRLCK;/*写锁*/
     fl.l_whence = SEEK_SET;
 
-    if (fcntl(fd, F_SETLK, &fl) == -1) {
+    if (fcntl(fd, F_SETLK, &fl) == -1) {/*调用fcntl尝试加锁，F_SETLK非阻塞地设置锁*/
         return ngx_errno;
     }
 
@@ -776,8 +775,7 @@ ngx_trylock_fd(ngx_fd_t fd)
 }
 
 
-ngx_err_t
-ngx_lock_fd(ngx_fd_t fd)
+ngx_err_t ngx_lock_fd(ngx_fd_t fd)
 {
     struct flock  fl;
 
@@ -785,7 +783,7 @@ ngx_lock_fd(ngx_fd_t fd)
     fl.l_type = F_WRLCK;
     fl.l_whence = SEEK_SET;
 
-    if (fcntl(fd, F_SETLKW, &fl) == -1) {
+    if (fcntl(fd, F_SETLKW, &fl) == -1) {/*调用fcntl尝试加锁，F_SETLKW阻塞地设置锁*/
         return ngx_errno;
     }
 

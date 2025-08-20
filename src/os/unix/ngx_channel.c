@@ -18,8 +18,10 @@ ngx_int_t ngx_write_channel(ngx_socket_t s, ngx_channel_t *ch, size_t size,
     struct iovec        iov[1];
     struct msghdr       msg;
     /*
-    在 Unix/Linux 系统中，文件描述符（File Descriptor，FD）是进程访问文件、套接字、管道等 I/O 资源的句柄。每个进程的文件描述符表是私有的，不同进程的相同 FD 可能指向不同的资源。因此，直接传输 FD 的数值没有意义，必须通过操作系
-    统提供的描述符传递机制（如通过sendmsg的辅助数据传输），让接收进程获得对应资源的引用。
+    在Unix/Linux系统中，文件描述符是进程访问文件、套接字、管道等 I/O 资源的句柄。
+    每个进程的文件描述符表是私有的，不同进程的相同FD可能指向不同的资源。因此，直接传
+    输FD的数值没有意义，必须通过操作系统提供的描述符传递机制（如通过sendmsg的辅助数
+    据传输），让接收进程获得对应资源的引用。
     */
 #if (NGX_HAVE_MSGHDR_MSG_CONTROL)
 

@@ -156,7 +156,7 @@ static ngx_command_t  ngx_core_commands[] = {
       ngx_null_command
 };
 
-/*核心模块的配置*/
+/*核心模块上下文ctx*/
 static ngx_core_module_t  ngx_core_module_ctx = {
     ngx_string("core"),
     ngx_core_module_create_conf,

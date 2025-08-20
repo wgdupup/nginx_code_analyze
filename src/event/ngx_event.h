@@ -443,7 +443,7 @@ typedef struct {
 #endif
 } ngx_event_conf_t;
 
-/*事件模块结构体*/
+/*事件模块上下文*/
 typedef struct {
     ngx_str_t              *name;
 
